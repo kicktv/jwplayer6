@@ -1,0 +1,21 @@
+
+jwplayer6.txt
+
+type  hls
+<script src="https://khaledtv.github.io/jwplayer6/jwplayer.js" type="text/javascript"></script>
+<script>jwplayer.key="xa1FfA65TEQXWfmC1LeJ1mrRfQygupE+vOSPmxcxUH0=";</script>
+<div id="my-video"></div>
+<script type="text/javascript">
+jwplayer("my-video").setup({
+file: "http://proxy-059.dc3.dailymotion.com/sec(e375936334fd5676f03298ed82124c6c)/video/477/498/306894774_mp4_h264_aac_hd.m3u8",
+image: "http://s1.dmcdn.net/elK-h/526x297-pSc.jpg",
+ logo: {file: "http://www7.0zz0.com/2017/01/21/01/526944764.png", position: 'top.left', hide: 'true', margin: '2', linktarget: '_blank',
+hide: 'false', over: '70',out: '', link: "http://www.khaledtv.tk"}, title: 'www.khaledtv.tk',  autostart: "false",
+ width: "700",  height: "400",  stretching: "fill",  hlshtml: true, type: "hls" }); </script>
+ 
+type  video/flash
+<script src="https://khaledtv.github.io/jwplayer6/jwplayer.js" type="text/javascript"></script>
+<script>jwplayer.key="xa1FfA65TEQXWfmC1LeJ1mrRfQygupE+vOSPmxcxUH0=";</script>
+<div id="mediaplayer"></div><script>  jwplayer("mediaplayer").setup({
+file: "https://archive.org/3/items/PUBMarocTelecomCan2004RTM/pub-snrt.mp4",
+image: "http://marocainonline.com/wp-content/uploads/2015/09/%D9%86%D8%B9%D9%85%D8%A7%D9%86-%D9%84%D8%AD%D9%84%D9%88-250x200.jpg",   autostart: "false", width: "700", height: "450", stretching: "exactfit",  type: "video/flash"  }); </script>
