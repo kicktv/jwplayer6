@@ -1,12 +1,23 @@
-<!DOCTYPE html><html><body><h1> test jwplayer6 </h1>
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<title> Test jwplayer6</title>
+<style  type="text/css">
+html,body {background-color: #f3f4f4;height:100%; width:100%; padding:0px; margin:0px;}
+.title {padding:0px; margin:0px; background-color: #02C54C; color: #ffffff; width: 100%; height:60px; line-height:55px;}
+@media only screen and (max-width:400px) {.title{font-size:20px;}}
+.bat {width:700px; height:41px;  border: 1px solid #02C54C; z-index:1;}
+@media only screen and (max-width:980px) {.bat{width:90%;}}
+.btn-success {color: #fff;background-color:#02C54C;border-color:#02C54C;
+z-index: 2;margin-left: -65px;width: 60px;height: 43px;}
+.container {max-width: 800px;margin: 0 auto;}</style>
+</head><body><center><h1 class="title"> Test Stream Video jwplayer6  </h1><br>
+<input class="bat" type="url" id="source" value="http://www.html-editor.tk/nature.mp4">
+<button type="submit" class="btn btn-success" onclick="javascript:loadVideo()">Stream</button><br><br>
 <script src="https://kicktv.github.io/jwplayer6/jwplayer.js" type="text/javascript"></script>
 <script>jwplayer.key="xa1FfA65TEQXWfmC1LeJ1mrRfQygupE+vOSPmxcxUH0=";</script>
-<div id="player">Loading the player...</div><script>
-jwplayer("player").setup({ playlist: [{
-sources: [{file: "https://svs.itworkscdn.net/ktvarabelive/karabe.smil/playlist.m3u8" }] }],
-rtmp:{bufferlength:.5}, androidhls:!0,
-image:"https://archive.org/3/items/html-edit/test-html.jpg",
- logo: {file: "http://www7.0zz0.com/2017/01/21/01/526944764.png", position: 'top.left', hide: 'true', margin: '2', linktarget: '_blank',
+<div class="container"><div id="player"><h3> Loading the player...</h3></div></div></center>
+<script> function loadVideo() {var url = document.getElementById('source').value;
+jwplayer("player").setup({ playlist: [{sources: [{file: url, }] }], rtmp:{bufferlength:.5},androidhls:!0,image:"",
+logo: {file: "http://www7.0zz0.com/2017/01/21/01/526944764.png", position: 'top.left', hide: 'true', margin: '2', linktarget: '_blank',
 hide: 'false', over: '70',out: '', link: "http://www.khaledtv.tk"}, title: 'www.khaledtv.tk',
-width:"600",height:"360",stretching:"exactfit",primary:"flash",autostart:"false",aboutlink:""});
-</script><h1> test jwplayer6 </h1></body></html>
+width:"100%",aspectratio:'16:9',stretching:"exactfit",primary:"flash",autostart:"true",aboutlink:""}); }
+</script></body></html>
