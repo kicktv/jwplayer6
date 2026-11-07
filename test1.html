@@ -43,9 +43,9 @@
     }
 
     .bat {
-      flex: 1 1 260px;
+      flex: 1 1 45px;
       min-width: 0;
-      height: 44px;
+      height: 45px;
       padding: 0 12px;
       border: 1px solid #02c54c;
       border-radius: 4px;
@@ -95,6 +95,7 @@
       inset: 0;
     }
 
+    /* pointer-events: none lets clicks pass through to the player */
     .placeholder {
       position: absolute;
       inset: 0;
@@ -103,7 +104,18 @@
       justify-content: center;
       color: #fff;
       font-size: 1rem;
-      margin: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .placeholder.hidden { display: none; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
     }
 
     @media only screen and (max-width: 480px) {
@@ -117,7 +129,7 @@
 
   <main class="container">
     <form class="controls" id="streamForm">
-      <label for="source" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Video URL</label>
+      <label for="source" class="sr-only">Video URL</label>
       <input class="bat" type="url" id="source" inputmode="url" autocomplete="off"
              placeholder="Enter a video URL (http or https)"
              value="https://kicktv.github.io/html-editor/nature.mp4">
@@ -127,7 +139,7 @@
     <p class="status" id="status" role="alert" aria-live="polite"></p>
 
     <div class="player-wrap">
-      <div id="player" aria-label="Video player"></div>
+      <div id="player"></div>
       <div class="placeholder" id="placeholder">Loading the player...</div>
     </div>
   </main>
@@ -145,14 +157,24 @@
       const status = document.getElementById('status');
       const placeholder = document.getElementById('placeholder');
 
-      let libraryReady = false;
+      let libraryPromise = null;
 
       function showError(message) {
         status.textContent = message;
+        placeholder.classList.add('hidden');
       }
 
       function clearError() {
         status.textContent = '';
+      }
+
+      function hidePlaceholder() {
+        placeholder.classList.add('hidden');
+      }
+
+      function showPlaceholder(text) {
+        placeholder.textContent = text;
+        placeholder.classList.remove('hidden');
       }
 
       function getValidUrl(raw) {
@@ -169,26 +191,43 @@
         }
       }
 
+      // Loads the jwplayer library once and reuses the same promise afterwards.
       function loadLibrary() {
-        return new Promise(function (resolve, reject) {
+        if (libraryPromise) return libraryPromise;
+
+        libraryPromise = new Promise(function (resolve, reject) {
           if (window.jwplayer) {
             resolve();
             return;
           }
           const script = document.createElement('script');
           script.src = JW_LIBRARY_URL;
-          script.onload = function () { resolve(); };
-          script.onerror = function () { reject(new Error('Could not load the player library.')); };
+          script.async = true;
+          script.onload = function () {
+            if (window.jwplayer) {
+              resolve();
+            } else {
+              reject(new Error('The player library loaded but did not initialise.'));
+            }
+          };
+          script.onerror = function () {
+            reject(new Error('Could not load the player library. Check your connection or the library URL.'));
+          };
           document.head.appendChild(script);
         });
+
+        libraryPromise.catch(function () { libraryPromise = null; });
+        return libraryPromise;
       }
 
       function setupPlayer(videoUrl) {
-        if (window.jwplayer.key !== JW_KEY) {
-          window.jwplayer.key = JW_KEY;
-        }
+        const jw = window.jwplayer;
+        jw.key = JW_KEY;
 
-        const player = window.jwplayer('player');
+        const player = jw('player');
+
+        // Remove any previous instance so a new URL starts cleanly.
+        try { player.remove(); } catch (e) { /* no previous instance */ }
 
         player.setup({
           playlist: [{
@@ -205,21 +244,21 @@
           aboutlink: ''
         });
 
-        player.onReady(function () {
-          placeholder.style.display = 'none';
+        player.onReady(hidePlaceholder);
+        player.onPlay(hidePlaceholder);
+        player.onPause(hidePlaceholder);
+        player.onSetupError(function (evt) {
+          showError('The player could not be set up: ' + (evt && evt.message ? evt.message : 'unknown error.'));
         });
-
         player.onError(function (evt) {
-          placeholder.style.display = 'none';
           showError('Playback error: ' + (evt && evt.message ? evt.message : 'the video could not be played.'));
         });
       }
 
-      async function handleStream(event) {
-        event.preventDefault();
+      async function startPlayer(rawUrl) {
         clearError();
 
-        const result = getValidUrl(input.value);
+        const result = getValidUrl(rawUrl);
         if (result.error) {
           showError(result.error);
           input.focus();
@@ -227,24 +266,25 @@
         }
 
         button.disabled = true;
-        placeholder.style.display = 'flex';
-        placeholder.textContent = 'Loading the player...';
+        showPlaceholder('Loading the player...');
 
         try {
-          if (!libraryReady) {
-            await loadLibrary();
-            libraryReady = true;
-          }
+          await loadLibrary();
           setupPlayer(result.url);
         } catch (err) {
-          placeholder.style.display = 'none';
           showError(err.message);
         } finally {
           button.disabled = false;
         }
       }
 
-      form.addEventListener('submit', handleStream);
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        startPlayer(input.value);
+      });
+
+      // Load the default video straight away so the player is visible on page load.
+      startPlayer(input.value);
     })();
   </script>
 </body>
