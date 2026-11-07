@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#02C54C">
+<title>Test Stream Video — JW Player</title>
+<style>
+  :root{
+    --brand:      #02C54C;
+    --brand-dark: #01a83f;
+    --bg:         #f3f4f4;
+    --text:       #1f2933;
+    --radius:     8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { height: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ---------- Header ---------- */
+  .title {
+    margin: 0;
+    padding: 14px 16px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: var(--brand);
+    color: #fff;
+    font-size: clamp(1rem, 1.2vw + .85rem, 1.6rem);
+    font-weight: 700;
+    line-height: 1.25;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+
+  /* ---------- Layout ---------- */
+  .container {
+    flex: 1 0 auto;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  /* ---------- URL form ---------- */
+  .player-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .bat {
+    flex: 1 1 260px;
+    min-width: 0;
+    height: 46px;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 16px;              /* 16px prevents iOS zoom-on-focus */
+    color: inherit;
+    background: #fff;
+    border: 1px solid var(--brand);
+    border-radius: var(--radius);
+    outline: none;
+    transition: box-shadow .15s, border-color .15s;
+  }
+  .bat:focus {
+    border-color: var(--brand-dark);
+    box-shadow: 0 0 0 3px rgba(2,197,76,.25);
+  }
+  .bat::placeholder { color: #9aa5b1; }
+
+  .btn-success {
+    flex: 0 0 auto;
+    height: 46px;
+    padding: 0 22px;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--brand);
+    border: 1px solid var(--brand);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background .15s, transform .05s;
+  }
+  .btn-success:hover  { background: var(--brand-dark); border-color: var(--brand-dark); }
+  .btn-success:active { transform: translateY(1px); }
+  .btn-success:focus-visible { outline: 3px solid rgba(2,197,76,.45); outline-offset: 2px; }
+
+  /* ---------- Error message ---------- */
+  .error {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #8a1c1c;
+    background: #fdecec;
+    border: 1px solid #f5c2c2;
+    border-radius: var(--radius);
+    overflow-wrap: anywhere;
+  }
+  .error[hidden] { display: none; }
+
+  /* ---------- Player: fluid 16:9 box (works in every browser) ---------- */
+  .player-wrap {
+    position: relative;
+    width: 100%;
+    margin-top: 16px;
+    padding-top: 56.25%;          /* 9 / 16 = 56.25% */
+    background: #000;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0,0,0,.18);
+  }
+  #player {
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  #player h3 {
+    margin: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #cfd8dc;
+    font-size: 15px;
+    font-weight: 400;
+    text-align: center;
+    padding: 0 16px;
+  }
+
+  /* ---------- Accessibility helper ---------- */
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ---------- Small screens ---------- */
+  @media (max-width: 480px) {
+    .container { padding: 12px; }
+    .player-form { flex-direction: column; }
+    .bat, .btn-success { flex: 1 1 auto; width: 100%; }
+    .player-wrap { border-radius: 6px; }
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <h1 class="title">Test Stream Video&nbsp;— JW Player</h1>
+  </header>
+
+  <main class="container">
+    <form class="player-form" id="stream-form" novalidate>
+      <label class="sr-only" for="source">Video URL</label>
+      <input class="bat" type="url" id="source" name="source"
+             inputmode="url" autocomplete="off" spellcheck="false"
+             placeholder="https://example.com/video.mp4"
+             value="https://kicktv.github.io/html-editor/nature.mp4">
+      <button class="btn-success" type="submit">Stream</button>
+    </form>
+
+    <p class="error" id="error" role="alert" hidden></p>
+
+    <div class="player-wrap">
+      <div id="player"><h3>Loading the player…</h3></div>
+    </div>
+  </main>
+
+  <!-- Player library -->
+  <script src="https://kicktv.github.io/jwplayer6/jwplayer.js"></script>
+  <script>window.jwplayer && (jwplayer.key = "xa1FfA65TEQXWfmC1LeJ1mrRfQygupE+vOSPmxcxUH0=");</script>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var form    = document.getElementById('stream-form');
+    var input   = document.getElementById('source');
+    var errorEl = document.getElementById('error');
+    var player  = null;
+
+    /* --------------------------------------------------------------
+       Player defaults.
+       NOTE: the logo is loaded over HTTPS to avoid mixed-content
+       blocking. If it does not appear, the host is probably dead —
+       replace it with your own image URL.
+    -------------------------------------------------------------- */
+    var PLAYER_OPTIONS = {
+      width:      '100%',
+      height:     '100%',
+      stretching: 'uniform',
+      autostart:  false,          // we call play() explicitly instead
+      primary:    'html5',        // Flash is dead — HTML5 only
+      androidhls: true,           // native HLS on Android
+      title:      'www.khaledtv.tk',
+      aboutlink:  '',
+      logo: {
+        file:       'https://www7.0zz0.com/2017/01/21/01/526944764.png',
+        position:   'top-left',   // JW6 uses hyphenated values
+        hide:       false,        // boolean, not the string 'false'
+        margin:     2,
+        link:       'http://www.khaledtv.tk',
+        linktarget: '_blank'
+      }
+    };
+
+    /* ------------------------- helpers ------------------------- */
+
+    function showError(message) {
+      errorEl.textContent = message;
+      errorEl.hidden = false;
+    }
+
+    function clearError() {
+      errorEl.textContent = '';
+      errorEl.hidden = true;
+    }
+
+    var urlProbe = document.createElement('a');
+
+    function isSupportedUrl(value) {
+      urlProbe.href = value;                       // resolves relative URLs too
+      return /^https?:$/i.test(urlProbe.protocol);
+    }
+
+    function describeError(err) {
+      if (!err) return 'unknown error';
+      return err.message || err.code || err.type || 'unknown error';
+    }
+
+    /* ------------------------- player -------------------------- */
+
+    function setupPlayer(url) {
+      var options = Object.assign({}, PLAYER_OPTIONS, { file: url });
+
+      player = jwplayer('player').setup(options);
+
+      if (typeof player.onError === 'function') {
+        player.onError(function (err) {
+          showError('Playback error: ' + describeError(err));
+        });
+      }
+      return player;
+    }
+
+    function loadVideo() {
+      clearError();
+
+      var url = input.value.trim();
+
+      if (!url) {
+        showError('Please enter a video URL.');
+        input.focus();
+        return;
+      }
+      if (!isSupportedUrl(url)) {
+        showError('That does not look like a valid http:// or https:// URL.');
+        input.focus();
+        return;
+      }
+      if (typeof window.jwplayer !== 'function') {
+        showError('The player library could not be loaded. Check your connection and reload the page.');
+        return;
+      }
+
+      try {
+        if (player) {
+          player.load({ file: url });   // reuse the existing instance
+        } else {
+          setupPlayer(url);
+        }
+        player.play();
+      } catch (e) {
+        showError('Could not start playback: ' + describeError(e));
+      }
+    }
+
+    /* ------------------------- wiring -------------------------- */
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();          // Enter key works the same as the button
+      loadVideo();
+    });
+
+    // Create the player immediately so the user sees a real player on load
+    // (without autoplay). Falls back silently if the library is unavailable.
+    if (typeof window.jwplayer === 'function') {
+      try {
+        setupPlayer(input.value.trim());
+      } catch (e) {
+        /* the placeholder text stays; the user can still press Stream */
+      }
+    }
+  })();
+  </script>
+</body>
+</html>
