@@ -1,0 +1,251 @@
+<!-- source:duck ai -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Test Stream Video - jwplayer6</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: #f3f4f4;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: #222;
+    }
+
+    .title {
+      margin: 0;
+      padding: 16px 12px;
+      background: #02c54c;
+      color: #fff;
+      text-align: center;
+      font-size: clamp(1.25rem, 4vw, 2rem);
+      line-height: 1.2;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin: 16px 0 8px;
+    }
+
+    .bat {
+      flex: 1 1 260px;
+      min-width: 0;
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid #02c54c;
+      border-radius: 4px;
+      font-size: 1rem;
+      background: #fff;
+    }
+
+    .bat:focus-visible,
+    .btn-success:focus-visible {
+      outline: 3px solid #029e3c;
+      outline-offset: 2px;
+    }
+
+    .btn-success {
+      height: 44px;
+      padding: 0 20px;
+      border: 1px solid #02c54c;
+      border-radius: 4px;
+      background: #02c54c;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .btn-success:hover { background: #029e3c; }
+    .btn-success:disabled { opacity: 0.6; cursor: wait; }
+
+    .status {
+      min-height: 1.5em;
+      margin: 8px 0;
+      text-align: center;
+      font-size: 0.95rem;
+      color: #b00020;
+    }
+
+    .player-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    #player {
+      position: absolute;
+      inset: 0;
+    }
+
+    .placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    @media only screen and (max-width: 480px) {
+      .controls { flex-direction: column; align-items: stretch; }
+      .btn-success { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <h1 class="title">Test Stream Video - jwplayer6</h1>
+
+  <main class="container">
+    <form class="controls" id="streamForm">
+      <label for="source" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Video URL</label>
+      <input class="bat" type="url" id="source" inputmode="url" autocomplete="off"
+             placeholder="Enter a video URL (http or https)"
+             value="https://kicktv.github.io/html-editor/nature.mp4">
+      <button type="submit" class="btn-success" id="streamBtn">Stream</button>
+    </form>
+
+    <p class="status" id="status" role="alert" aria-live="polite"></p>
+
+    <div class="player-wrap">
+      <div id="player" aria-label="Video player"></div>
+      <div class="placeholder" id="placeholder">Loading the player...</div>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const JW_LIBRARY_URL = 'https://kicktv.github.io/jwplayer6/jwplayer.js';
+      const JW_KEY = 'xa1FfA65TEQXWfmC1LeJ1mrRfQygupE+vOSPmxcxUH0=';
+
+      const form = document.getElementById('streamForm');
+      const input = document.getElementById('source');
+      const button = document.getElementById('streamBtn');
+      const status = document.getElementById('status');
+      const placeholder = document.getElementById('placeholder');
+
+      let libraryReady = false;
+
+      function showError(message) {
+        status.textContent = message;
+      }
+
+      function clearError() {
+        status.textContent = '';
+      }
+
+      function getValidUrl(raw) {
+        const value = raw.trim();
+        if (!value) return { error: 'Please enter a video URL.' };
+        try {
+          const url = new URL(value);
+          if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+            return { error: 'Only http:// and https:// URLs are supported.' };
+          }
+          return { url: url.href };
+        } catch (e) {
+          return { error: 'That does not look like a valid URL.' };
+        }
+      }
+
+      function loadLibrary() {
+        return new Promise(function (resolve, reject) {
+          if (window.jwplayer) {
+            resolve();
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = JW_LIBRARY_URL;
+          script.onload = function () { resolve(); };
+          script.onerror = function () { reject(new Error('Could not load the player library.')); };
+          document.head.appendChild(script);
+        });
+      }
+
+      function setupPlayer(videoUrl) {
+        if (window.jwplayer.key !== JW_KEY) {
+          window.jwplayer.key = JW_KEY;
+        }
+
+        const player = window.jwplayer('player');
+
+        player.setup({
+          playlist: [{
+            title: 'Stream',
+            sources: [{ file: videoUrl }]
+          }],
+          primary: 'html5',
+          androidhls: true,
+          width: '100%',
+          aspectratio: '16:9',
+          stretching: 'uniform',
+          autostart: false,
+          title: 'flaxtv',
+          aboutlink: ''
+        });
+
+        player.onReady(function () {
+          placeholder.style.display = 'none';
+        });
+
+        player.onError(function (evt) {
+          placeholder.style.display = 'none';
+          showError('Playback error: ' + (evt && evt.message ? evt.message : 'the video could not be played.'));
+        });
+      }
+
+      async function handleStream(event) {
+        event.preventDefault();
+        clearError();
+
+        const result = getValidUrl(input.value);
+        if (result.error) {
+          showError(result.error);
+          input.focus();
+          return;
+        }
+
+        button.disabled = true;
+        placeholder.style.display = 'flex';
+        placeholder.textContent = 'Loading the player...';
+
+        try {
+          if (!libraryReady) {
+            await loadLibrary();
+            libraryReady = true;
+          }
+          setupPlayer(result.url);
+        } catch (err) {
+          placeholder.style.display = 'none';
+          showError(err.message);
+        } finally {
+          button.disabled = false;
+        }
+      }
+
+      form.addEventListener('submit', handleStream);
+    })();
+  </script>
+</body>
+</html>
