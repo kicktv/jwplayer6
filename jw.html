@@ -1,0 +1,354 @@
+<!-- source: grok -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Stream Player</title>
+  
+  <!-- Plyr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
+  
+  <style>
+    :root {
+      --primary: #02C54C;
+      --primary-dark: #01a33d;
+      --bg: #f3f4f4;
+      --text: #1a1a1a;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* Header */
+    .header {
+      background-color: var(--primary);
+      color: white;
+      text-align: center;
+      padding: 1rem 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    .header h1 {
+      font-size: clamp(1.25rem, 4vw, 1.75rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    /* Main container */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+    }
+
+    /* URL input group */
+    .url-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .url-input {
+      flex: 1 1 280px;
+      min-width: 0;
+      height: 48px;
+      padding: 0 1rem;
+      border: 2px solid var(--primary);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .url-input:focus {
+      border-color: var(--primary-dark);
+      box-shadow: 0 0 0 3px rgba(2, 197, 76, 0.25);
+    }
+
+    .btn-stream {
+      height: 48px;
+      padding: 0 1.5rem;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn-stream:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-stream:active {
+      transform: scale(0.98);
+    }
+
+    .btn-stream:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Player wrapper */
+    .player-wrapper {
+      position: relative;
+      background: #000;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+      aspect-ratio: 16 / 9;
+    }
+
+    /* Plyr customization to match theme */
+    .plyr {
+      --plyr-color-main: var(--primary);
+      height: 100% !important;
+    }
+
+    .plyr__video-wrapper {
+      height: 100% !important;
+    }
+
+    /* Loading / placeholder state */
+    .placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+      color: #aaa;
+      text-align: center;
+      padding: 2rem;
+      z-index: 2;
+    }
+
+    .placeholder.hidden {
+      display: none;
+    }
+
+    .placeholder svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1rem;
+      opacity: 0.6;
+    }
+
+    .error-message {
+      color: #ff6b6b;
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      .url-group {
+        flex-direction: column;
+      }
+
+      .btn-stream {
+        width: 100%;
+      }
+
+      .container {
+        padding: 1rem 0.75rem 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <h1>Video Stream Player</h1>
+  </header>
+
+  <main class="container">
+    <div class="url-group">
+      <input 
+        type="url" 
+        id="source" 
+        class="url-input" 
+        placeholder="Paste video URL (MP4, HLS .m3u8, etc.)"
+        value="https://kicktv.github.io/html-editor/nature.mp4"
+        autocomplete="off"
+        spellcheck="false"
+      >
+      <button type="button" id="loadBtn" class="btn-stream">
+        Stream
+      </button>
+    </div>
+
+    <div class="player-wrapper">
+      <div id="placeholder" class="placeholder">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+        <p>Enter a video URL and click <strong>Stream</strong></p>
+        <p id="errorMsg" class="error-message" style="display:none;"></p>
+      </div>
+
+      <video id="player" playsinline controls crossorigin></video>
+    </div>
+  </main>
+
+  <!-- Plyr + hls.js -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
+
+  <script>
+    const sourceInput = document.getElementById('source');
+    const loadBtn = document.getElementById('loadBtn');
+    const video = document.getElementById('player');
+    const placeholder = document.getElementById('placeholder');
+    const errorMsg = document.getElementById('errorMsg');
+
+    let player = null;
+    let hls = null;
+
+    // Initialize Plyr
+    function initPlayer() {
+      if (player) {
+        player.destroy();
+      }
+
+      player = new Plyr(video, {
+        controls: [
+          'play-large', 'play', 'progress', 'current-time',
+          'mute', 'volume', 'settings', 'fullscreen'
+        ],
+        settings: ['quality', 'speed'],
+        ratio: '16:9',
+        autopause: true,
+        keyboard: { focused: true, global: true }
+      });
+    }
+
+    function showError(message) {
+      errorMsg.textContent = message;
+      errorMsg.style.display = 'block';
+      placeholder.classList.remove('hidden');
+    }
+
+    function hidePlaceholder() {
+      placeholder.classList.add('hidden');
+      errorMsg.style.display = 'none';
+    }
+
+    function loadVideo() {
+      const url = sourceInput.value.trim();
+
+      if (!url) {
+        showError('Please enter a valid video URL');
+        return;
+      }
+
+      // Reset previous
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
+      video.removeAttribute('src');
+      video.load();
+
+      loadBtn.disabled = true;
+      loadBtn.textContent = 'Loading...';
+      errorMsg.style.display = 'none';
+
+      // Detect HLS
+      const isHls = url.includes('.m3u8') || url.includes('application/x-mpegURL');
+
+      if (isHls && Hls.isSupported()) {
+        hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true
+        });
+
+        hls.loadSource(url);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          hidePlaceholder();
+          initPlayer();
+          player.play().catch(() => {});
+          loadBtn.disabled = false;
+          loadBtn.textContent = 'Stream';
+        });
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            showError('Failed to load HLS stream. Check the URL or try another source.');
+            loadBtn.disabled = false;
+            loadBtn.textContent = 'Stream';
+          }
+        });
+
+      } else if (video.canPlayType('application/vnd.apple.mpegurl') && isHls) {
+        // Native HLS (Safari)
+        video.src = url;
+        video.addEventListener('loadedmetadata', () => {
+          hidePlaceholder();
+          initPlayer();
+          player.play().catch(() => {});
+          loadBtn.disabled = false;
+          loadBtn.textContent = 'Stream';
+        }, { once: true });
+
+        video.addEventListener('error', () => {
+          showError('Failed to load video.');
+          loadBtn.disabled = false;
+          loadBtn.textContent = 'Stream';
+        }, { once: true });
+
+      } else {
+        // Regular MP4 / WebM etc.
+        video.src = url;
+
+        video.addEventListener('loadeddata', () => {
+          hidePlaceholder();
+          initPlayer();
+          player.play().catch(() => {});
+          loadBtn.disabled = false;
+          loadBtn.textContent = 'Stream';
+        }, { once: true });
+
+        video.addEventListener('error', () => {
+          showError('Unable to play this video. Check the URL or CORS settings.');
+          loadBtn.disabled = false;
+          loadBtn.textContent = 'Stream';
+        }, { once: true });
+      }
+    }
+
+    // Events
+    loadBtn.addEventListener('click', loadVideo);
+
+    sourceInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        loadVideo();
+      }
+    });
+
+    // Optional: auto-load the default URL on page load
+    // loadVideo();
+  </script>
+</body>
+</html>
